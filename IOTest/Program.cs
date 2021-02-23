@@ -5,6 +5,9 @@ using NoName.AdofaiLevelIO.Model.Actions;
 
 AdofaiLevel adofaiLevel = new AdofaiLevel("First Town Of This Journey (Easy).adofai");
 
+const double radian = 360 / (3.1415926535897 * 2);
+Console.WriteLine(1.5707963705062866 * radian);
+
 Console.WriteLine($"Artist: {adofaiLevel.LevelInfo.Artist}");
 Console.WriteLine($"Author: {adofaiLevel.LevelInfo.Author}");
 Console.WriteLine($"Song: {adofaiLevel.LevelInfo.Song}");
