@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 //using System.Globalization;
 using Newtonsoft.Json.Linq;
+using UnityEngine;
 using NoName.AdofaiLevelIO.Model.Actions;
-
-//using UnityEngine;
+using EventType = NoName.AdofaiLevelIO.Model.Actions.EventType;
 
 namespace NoName.AdofaiLevelIO.Model
 {
@@ -102,6 +102,18 @@ namespace NoName.AdofaiLevelIO.Model
             }
             set
 			{
+                if (Index == 0)
+                {
+                    _adofaiLevel.LevelInfo.Bpm = value;
+					return;
+                }
+
+                if (Mathf.Approximately(_adofaiLevel.Floors[Index - 1].Bpm, value))
+                {
+					Actions.Remove(EventType.SetSpeed);
+                    return;
+                }
+
                 Actions.Add(new Data.SetSpeed(SpeedType.Bpm, value));
 				_floorCacheContainer.Caching(Index, new FloorCache() { Bpm = value });
 			}
@@ -121,21 +133,164 @@ namespace NoName.AdofaiLevelIO.Model
             _adofaiLevel = adofaiLevel;
             _floorCacheContainer = floorCacheContainer;
         }
+		
+		public static class AngleParser
+        {
+			//string Dictionary<>
 
-  //      public static double incrementAngle(double startangle, double increment)
-  //      {
-  //          return mod(startangle + increment, 6.2831854820251465);
-  //      }
+			public float Direction2Angle(char direction)
+			{
+				switch (direction)
+				{
+					case 'R':
+						return 0;
+					case 'E':
+						return 45;
+					case 'T':
+						return 60;
+					case 'U':
+						return 90;
+					case 'Q':
+						return 135;
+					case 'G':
+						return 150;
+					case 'L':
+						return 180;
+					case 'F':
+						return 240;
+					case 'D':
+						return 270;
+					case 'Z':
+						return 225;
+					case 'B':
+						return 330;
+					case 'C':
+						return 315;
+					case 'J':
+						return 30;
+					case 'H':
+						return 120;
+					case 'N':
+						return 210;
+					case 'M':
+						return 300;
+					case 'p':
+						return 15;
+					case 'o':
+						return 75;
+					case 'q':
+						return 105;
+					case 'W':
+						return 165;
+					case 'x':
+						return 195;
+					case 'V':
+						return 255;
+					case 'Y':
+						return 285;
+					case 'A':
+						return 345;
+					case '!':
+						return -1;//midspin
+					case '5':
+						return 108;//CW;
+					case '6':
+						return 360 - 108;//CCW;
+					case '7':
+						return 128;//CW;
+					case '8':
+						return 360 - 128;//CCW;
+					case '9':
+						return 210;//CW;
+					default:
+						goto case 'R';
+				}
+			}
 
-  //      public static double mod(double x, double m)
-  //      {
-  //          return (x % m + m) % m;
-  //      }
+			public char Angle2Direction(float direction)
+			{
+				switch (direction)
+				{
+					case 0:
+						return 'R';
+					case 45:
+						return 'E';
+					case 60:
+						return 'T';
+					case 90:
+						return 'U';
+					case 135:
+						return 'Q';
+					case 150:
+						return 'G';
+					case 180:
+						return 'L';
+					case 240:
+						return 'F';
+					case 270:
+						return 'D';
+					case 225:
+						return 'Z';
+					case 330:
+						return 'B';
+					case 315:
+						return 'C';
+					case 30:
+						return 'J';
+					case 120:
+						return 'H';
+					case 210:
+						return 'N';
+					case 300:
+						return 'M';
+					case 15:
+						return 'p';
+					case 75:
+						return 'o';
+					case 105:
+						return 'q';
+					case 165:
+						return 'W';
+					case 195:
+						return 'x';
+					case 255:
+						return 'V';
+					case 285:
+						return 'Y';
+					case 345:
+						return 'A';
+					case -1:
+						return '!';//midspin
+					case 108:
+						return '5';//CW;
+					case 360 - 108:
+						return '6';//CCW;
+					case 128:
+						return '7';//CW;
+					case 360 - 128:
+						return '8';//CCW;
+					case 210:
+						return '9';//CW;
+					default:
+						goto case 'R';
+				}
+			}
+		}
 
-  //      public static Vector3 getVectorFromAngle(double angle, double radius)
-  //      {
-  //          return new Vector3((float)(Math.Sin(angle) * radius), (float)(Math.Cos(angle) * radius), 0f);
-  //      }
+		//      public static double incrementAngle(double startangle, double increment)
+		//      {
+		//          return mod(startangle + increment, 6.2831854820251465);
+		//      }
+
+		//      public static double mod(double x, double m)
+		//      {
+		//          return (x % m + m) % m;
+		//      }
+
+		//      public static Vector3 getVectorFromAngle(double angle, double radius)
+		//      {
+		//          return new Vector3((float)(Math.Sin(angle) * radius), (float)(Math.Cos(angle) * radius), 0f);
+		//      }
 
 		//public List<Floor> MakeLevel()
 		//{
@@ -154,7 +309,7 @@ namespace NoName.AdofaiLevelIO.Model
 		//	{
 		//		double radius = (double)scrController.instance.startRadius;
 		//		double num3 = 0.0;
-  //              bool isEditor = true;//Application.isEditor;
+		//              bool isEditor = true;//Application.isEditor;
 		//		char c = text[i];
 		//		if (c <= 'q')
 		//		{
@@ -241,8 +396,8 @@ namespace NoName.AdofaiLevelIO.Model
 		//						if (isEditor)
 		//						{
 		//							var flag2 = false;
-  //                                  var num4 = i + 1;
-  //                                  var flag3 = false;
+		//                                  var num4 = i + 1;
+		//                                  var flag3 = false;
 		//							if (i + 1 <= text.Length && text[i + 1] == '*')
 		//							{
 		//								flag3 = true;
@@ -324,7 +479,7 @@ namespace NoName.AdofaiLevelIO.Model
 		//			listFloors[num2 - 1].IsMidSpin = true;
 		//		}
 		//		var flag4 = true;
-				
+
 		//		component2.isCCW = !flag;
 		//		component2.speed = num;
 		//		num2++;
