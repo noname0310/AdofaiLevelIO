@@ -47,11 +47,13 @@ namespace NoName.AdofaiLevelIO.Model.Actions
             }
         }
 
-        internal SetSpeed(JObject jObject, int floorIndex, int actionIndex) 
-            : base(jObject, floorIndex, actionIndex) { }
+        internal SetSpeed(JObject jObject, int floorIndex, int actionIndex, FloorCacheContainer floorCacheContainer) 
+            : base(jObject, floorIndex, actionIndex, floorCacheContainer) { }
 
         public void SetValue(SpeedType speedType, float value)
         {
+            foreach (var item in FloorCacheContainer)
+                item.Value.Bpm = null;
             SpeedType = speedType;
             Value = value;
         }

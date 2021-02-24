@@ -1,12 +1,8 @@
 ﻿using System;
 using NoName.AdofaiLevelIO;
-using NoName.AdofaiLevelIO.Model;
 using NoName.AdofaiLevelIO.Model.Actions;
 
 AdofaiLevel adofaiLevel = new AdofaiLevel("First Town Of This Journey (Easy).adofai");
-
-const double radian = 360 / (3.1415926535897 * 2);
-Console.WriteLine(1.5707963705062866 * radian);
 
 Console.WriteLine($"Artist: {adofaiLevel.LevelInfo.Artist}");
 Console.WriteLine($"Author: {adofaiLevel.LevelInfo.Author}");
@@ -17,8 +13,10 @@ Console.WriteLine($"Floors.Count: {adofaiLevel.Floors.Count}");
 Console.WriteLine("--------------Floors--------------");
 foreach (var item in adofaiLevel.Floors)
 {
-    Console.Write(item.Index);
-    Console.Write(" Actions:" + item.Actions.Count);
+    Console.Write($"FloorIndex: {item.Index}");
+    Console.Write($" Direction:{item.Direction}");
+    Console.Write($" BPM:{item.Bpm}");
+    Console.Write($" Actions:{item.Actions.Count}");
     Console.Write(" { ");
     foreach (var action in item.Actions)
     {

@@ -1,8 +1,10 @@
 ﻿using System;
-//using System.Collections.Generic;
+using System.Collections.Generic;
+using System.Linq;
 //using System.Globalization;
-//using System.Linq;
 using Newtonsoft.Json.Linq;
+using NoName.AdofaiLevelIO.Model.Actions;
+
 //using UnityEngine;
 
 namespace NoName.AdofaiLevelIO.Model
@@ -10,68 +12,114 @@ namespace NoName.AdofaiLevelIO.Model
     public class Floor : JObjectMaterializer
     {
         public int Index { get; }
-
         public char Direction
         {
             get
-			{
+            {
+                if (_floorCacheContainer.TryGetValue(Index, out var floorCache) && floorCache.Direction != null)
+                    return floorCache.Direction.Value;
+                var direction = LevelReader.GetPathData(JObject)[Index];
+				_floorCacheContainer.Caching(Index, new FloorCache() { Direction = direction });
+				return direction;
+            }
+            set
+            {
+                var data = LevelReader.GetPathData(JObject).ToCharArray();
+                data[Index] = value;
+				LevelReader.SetPathData(JObject, new string(data));
+                _floorCacheContainer.Caching(Index, new FloorCache() { Direction = value });
+            }
+        }
+
+        public float EntryAngle
+        {
+            get
+            {
+                if (_floorCacheContainer.TryGetValue(Index, out var floorCache) && floorCache.EntryAngle != null)
+                    return floorCache.EntryAngle.Value;
+                _floorCacheContainer.Caching(Index, new FloorCache() { EntryAngle = 11111111 });
 				throw new NotImplementedException();
             }
-            set
-            {
-
-            }
-		}
-        public int EntryAngle
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-            set
-            {
-
-            }
+            set => _floorCacheContainer.Caching(Index, new FloorCache() { EntryAngle = value });
         }
-        public int ExitAngle
+        public float ExitAngle
         {
             get
             {
-                throw new NotImplementedException();
+                if (_floorCacheContainer.TryGetValue(Index, out var floorCache) && floorCache.ExitAngle != null)
+                    return floorCache.ExitAngle.Value;
+                _floorCacheContainer.Caching(Index, new FloorCache() { ExitAngle = 11111111 });
+				throw new NotImplementedException();
             }
-            set
-            {
-
-            }
+            set => _floorCacheContainer.Caching(Index, new FloorCache() { ExitAngle = value });
         }
-        public int Bpm
+        public float Bpm
         {
             get
             {
-                foreach (var action in _floorContainer[Index].Actions)
+                float result;
+                var mulitiplyValue = 1f;
+				
+                for (var i = Index; 0 < i; i--)
                 {
-                    //if (action.EventType == EventType.SetSpeed.
+                    if (_floorCacheContainer.TryGetValue(i, out var floorCache) && floorCache.Bpm != null)
+                    {
+                        result = floorCache.Bpm.Value * mulitiplyValue;
+						_floorCacheContainer.Caching(Index, new FloorCache() { Bpm = result });
+						return result;
+                    }
+
+                    var setSpeedAction = (
+                        from action 
+                        in _adofaiLevel.Floors[i].Actions 
+                        where action.EventType == EventType.SetSpeed 
+                        select action as SetSpeed
+                        ).FirstOrDefault();
+
+					if (setSpeedAction == null)
+						continue;
+
+                    var value = setSpeedAction.Value;
+                    switch (setSpeedAction.SpeedType)
+                    {
+                        case SpeedType.Bpm:
+                            result = value * mulitiplyValue;
+							_floorCacheContainer.Caching(Index, new FloorCache() { Bpm = result });
+							return result;
+                        case SpeedType.Multiplier:
+                            mulitiplyValue *= value;
+                            break;
+                        case SpeedType.NotAvailable:
+                            break;
+                        default:
+                            goto case SpeedType.NotAvailable;
+                    }
                 }
 
-                return 1;
+                result = _adofaiLevel.LevelInfo.Bpm * mulitiplyValue;
+				_floorCacheContainer.Caching(Index, new FloorCache() { Bpm = result });
+				return result;
             }
             set
-            {
-
-            }
+			{
+                Actions.Add(new Data.SetSpeed(SpeedType.Bpm, value));
+				_floorCacheContainer.Caching(Index, new FloorCache() { Bpm = value });
+			}
         }
 
         public bool IsMidSpin => Direction == '!';
 
         public ActionContainer Actions { get; }
 
-        private readonly FloorContainer _floorContainer;
+        private readonly AdofaiLevel _adofaiLevel;
+        private readonly FloorCacheContainer _floorCacheContainer;
 
-        internal Floor(JObject jObject, int floorIndex, FloorContainer floorContainer) : base(jObject)
+		internal Floor(JObject jObject, int floorIndex, AdofaiLevel adofaiLevel, FloorCacheContainer floorCacheContainer) : base(jObject)
         {
-            Actions = new ActionContainer(jObject, floorIndex);
+            Actions = new ActionContainer(jObject, floorIndex, _floorCacheContainer);
             Index = floorIndex;
-            _floorContainer = floorContainer;
+            _adofaiLevel = adofaiLevel;
+            _floorCacheContainer = floorCacheContainer;
         }
 
   //      public static double incrementAngle(double startangle, double increment)

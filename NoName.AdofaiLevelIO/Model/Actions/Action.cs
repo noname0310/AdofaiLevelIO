@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Linq;
 using Newtonsoft.Json.Linq;
 
-namespace NoName.AdofaiLevelIO.Model
+namespace NoName.AdofaiLevelIO.Model.Actions
 {
     public class Action : JObjectMaterializer
     {
@@ -10,13 +9,15 @@ namespace NoName.AdofaiLevelIO.Model
 
         protected readonly int FloorIndex;
         protected readonly int ActionIndex;
+        protected readonly FloorCacheContainer FloorCacheContainer;
 
-        internal Action(JObject jObject, int floorIndex, int actionIndex) : base(jObject)
+        internal Action(JObject jObject, int floorIndex, int actionIndex, FloorCacheContainer floorCacheContainer) : base(jObject)
         {
             if (LevelReader.GetFloorActions(jObject, floorIndex).Count <= actionIndex)
                 throw new IndexOutOfRangeException();
             FloorIndex = floorIndex;
             ActionIndex = actionIndex;
+            FloorCacheContainer = floorCacheContainer;
         }
 
         internal static EventType ParseEventType(string eventType)

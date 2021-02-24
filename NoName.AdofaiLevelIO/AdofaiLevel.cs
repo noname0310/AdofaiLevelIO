@@ -18,10 +18,12 @@ namespace NoName.AdofaiLevelIO
         public AdofaiLevel(string path) : base(JObject.Parse(File.ReadAllText(path)))
         {
             _path = path;
-            Floors = new FloorContainer(RawData);
+            Floors = new FloorContainer(RawData, this);
             LevelInfo = new LevelInfo(RawData);
         }
 
         public void SaveLevel() => File.WriteAllText(_path, RawData.ToString());
+
+        public void ResetCache() => Floors.ResetCache();
     }
 }
