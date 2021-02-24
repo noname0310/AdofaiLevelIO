@@ -8,7 +8,7 @@ namespace NoName.AdofaiLevelIO
 {
     public class FloorContainer : JObjectMaterializer, IEnumerable<Floor>
     {
-        public int Count => LevelReader.GetPathData(JObject).Length;
+        public int Count => LevelReader.GetPathData(JObject).Length + 1;
 
         public Floor this[int index]
         {

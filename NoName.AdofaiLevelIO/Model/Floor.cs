@@ -16,42 +16,175 @@ namespace NoName.AdofaiLevelIO.Model
         {
             get
             {
+                if (Index == 0)
+                    return 'L';
+
                 if (_floorCacheContainer.TryGetValue(Index, out var floorCache) && floorCache.Direction != null)
                     return floorCache.Direction.Value;
-                var direction = LevelReader.GetPathData(JObject)[Index];
+                var direction = LevelReader.GetPathData(JObject)[Index - 1];
 				_floorCacheContainer.Caching(Index, new FloorCache() { Direction = direction });
 				return direction;
             }
             set
             {
+                if (Index == 0)
+                    throw new IndexOutOfRangeException("StartFloor cannot be modified");
+
                 var data = LevelReader.GetPathData(JObject).ToCharArray();
-                data[Index] = value;
+                data[Index - 1] = value;
 				LevelReader.SetPathData(JObject, new string(data));
                 _floorCacheContainer.Caching(Index, new FloorCache() { Direction = value });
+                foreach (var item in _floorCacheContainer)
+                {
+                    item.Value.EntryAngle = null;
+                    item.Value.ExitAngle = null;
+                }
             }
         }
 
-        public float EntryAngle
+        public double EntryAngle
         {
             get
             {
-                if (_floorCacheContainer.TryGetValue(Index, out var floorCache) && floorCache.EntryAngle != null)
+                if (Index == 0)
+                    return 4.71238899230957;
+
+				if (_floorCacheContainer.TryGetValue(Index, out var floorCache) && floorCache.EntryAngle != null)
                     return floorCache.EntryAngle.Value;
-                _floorCacheContainer.Caching(Index, new FloorCache() { EntryAngle = 11111111 });
-				throw new NotImplementedException();
+
+                var result = 0.0;
+                var c = Direction;
+
+				if (c <= 'q')
+				{
+					if (c != '!')
+					{
+						switch (c)
+						{
+							case '5':
+                                result = IncrementAngle(this.listFloors.Last<scrFloor>().entryangle, 1.8849555253982544);
+								break;
+							case '6':
+                                result = IncrementAngle(this.listFloors.Last<scrFloor>().entryangle, -1.8849555253982544);
+								break;
+							case '7':
+                                result = IncrementAngle(this.listFloors.Last<scrFloor>().entryangle, 2.243994951248169);
+								break;
+							case '8':
+                                result = IncrementAngle(this.listFloors.Last<scrFloor>().entryangle, -2.243994951248169);
+								break;
+							case '9':
+                                result = IncrementAngle(this.listFloors.Last<scrFloor>().entryangle, 3.665191411972046);
+								break;
+							case 'A':
+                                result = 1.832595705986023;
+								break;
+							case 'B':
+                                result = 2.6179938316345215;
+								break;
+							case 'C':
+                                result = 2.356194496154785;
+								break;
+							case 'D':
+                                result = 3.1415927410125732;
+								break;
+							case 'E':
+                                result = 0.7853981852531433;
+								break;
+							case 'F':
+                                result = 3.665191411972046;
+								break;
+							case 'G':
+                                result = 5.759586334228516;
+								break;
+							case 'H':
+                                result = 5.235987663269043;
+								break;
+							case 'J':
+                                result = 1.0471975803375244;
+								break;
+							case 'L':
+                                result = 4.71238899230957;
+								break;
+							case 'M':
+                                result = 2.094395160675049;
+								break;
+							case 'N':
+                                result = 4.188790321350098;
+								break;
+							case 'Q':
+                                result = 5.4977874755859375;
+								break;
+							case 'R':
+                                result = 1.5707963705062866;
+								break;
+							case 'T':
+                                result = 0.5235987901687622;
+								break;
+							case 'U':
+                                result = 0.0;
+								break;
+							case 'V':
+                                result = 3.4033920764923096;
+								break;
+							case 'W':
+                                result = 4.974188327789307;
+								break;
+							case 'Y':
+                                result = 2.879793167114258;
+								break;
+							case 'Z':
+                                result = 3.9269909858703613;
+								break;
+							case '[':
+								break;
+							case 'h':
+                                result = IncrementAngle(this.listFloors.Last<scrFloor>().entryangle, 2.094395160675049);
+								break;
+							case 'j':
+                                result = IncrementAngle(this.listFloors.Last<scrFloor>().entryangle, -2.094395160675049);
+								break;
+							case 'o':
+                                result = 0.2617993950843811;
+								break;
+							case 'p':
+                                result = 1.3089969158172607;
+								break;
+							case 'q':
+                                result = 6.021385669708252;
+								break;
+						}
+					}
+					else //midspin
+                        result = (double)((float)this.listFloors.Last<scrFloor>().entryangle);
+				}
+				else if (c != 't')
+				{
+					if (c != 'x')
+					{
+						if (c == 'y')
+                            result = IncrementAngle(this.listFloors.Last<scrFloor>().entryangle, (-1.0471976f));
+					}
+					else
+                        result = 4.450589656829834;
+				}
+				else
+                    result = IncrementAngle(this.listFloors.Last<scrFloor>().entryangle, (-1.0471976f));
+
+				_floorCacheContainer.Caching(Index, new FloorCache() { EntryAngle = result });
+                return result;
             }
-            set => _floorCacheContainer.Caching(Index, new FloorCache() { EntryAngle = value });
         }
-        public float ExitAngle
+        public double ExitAngle
         {
             get
             {
                 if (_floorCacheContainer.TryGetValue(Index, out var floorCache) && floorCache.ExitAngle != null)
                     return floorCache.ExitAngle.Value;
-                _floorCacheContainer.Caching(Index, new FloorCache() { ExitAngle = 11111111 });
-				throw new NotImplementedException();
+				var result = _adofaiLevel.Floors[Index - 1].EntryAngle;
+                _floorCacheContainer.Caching(Index, new FloorCache() { ExitAngle = result });
+                return result;
             }
-            set => _floorCacheContainer.Caching(Index, new FloorCache() { ExitAngle = value });
         }
         public float Bpm
         {
@@ -133,357 +266,290 @@ namespace NoName.AdofaiLevelIO.Model
             _adofaiLevel = adofaiLevel;
             _floorCacheContainer = floorCacheContainer;
         }
-		
-		public static class AngleParser
+
+        public static float GetAngleFromFloorCharDirectionWithCheck(char direction, out bool exists)
         {
-			//string Dictionary<>
+            var result = 0f;
+            exists = true;
+            switch (direction)
+            {
+                case 'A':
+                    return 345f;
+                case 'B':
+                    return 300f;
+                case 'C':
+                    return 315f;
+                case 'D':
+                    return 270f;
+                case 'E':
+                    return 45f;
+                case 'F':
+                    return 240f;
+                case 'G':
+                    return 120f;
+                case 'H':
+                    return 150f;
+                case 'I':
+                case 'K':
+                case 'O':
+                case 'P':
+                case 'S':
+                case 'X':
+                    break;
+                case 'J':
+                    return 30f;
+                case 'L':
+                    return 180f;
+                case 'M':
+                    return 330f;
+                case 'N':
+                    return 210f;
+                case 'Q':
+                    return 135f;
+                case 'R':
+                    return 0f;
+                case 'T':
+                    return 60f;
+                case 'U':
+                    return 90f;
+                case 'V':
+                    return 255f;
+                case 'W':
+                    return 165f;
+                case 'Y':
+                    return 285f;
+                case 'Z':
+                    return 225f;
+                default:
+                    switch (direction)
+                    {
+                        case 'o':
+                            return 75f;
+                        case 'p':
+                            return 15f;
+                        case 'q':
+                            return 105f;
+                        default:
+                            if (direction == 'x')
+                                return 195f;
+                            break;
+                    }
+                    break;
+            }
+            exists = false;
+            return result;
+        }
 
-			public float Direction2Angle(char direction)
-			{
-				switch (direction)
-				{
-					case 'R':
-						return 0;
-					case 'E':
-						return 45;
-					case 'T':
-						return 60;
-					case 'U':
-						return 90;
-					case 'Q':
-						return 135;
-					case 'G':
-						return 150;
-					case 'L':
-						return 180;
-					case 'F':
-						return 240;
-					case 'D':
-						return 270;
-					case 'Z':
-						return 225;
-					case 'B':
-						return 330;
-					case 'C':
-						return 315;
-					case 'J':
-						return 30;
-					case 'H':
-						return 120;
-					case 'N':
-						return 210;
-					case 'M':
-						return 300;
-					case 'p':
-						return 15;
-					case 'o':
-						return 75;
-					case 'q':
-						return 105;
-					case 'W':
-						return 165;
-					case 'x':
-						return 195;
-					case 'V':
-						return 255;
-					case 'Y':
-						return 285;
-					case 'A':
-						return 345;
-					case '!':
-						return -1;//midspin
-					case '5':
-						return 108;//CW;
-					case '6':
-						return 360 - 108;//CCW;
-					case '7':
-						return 128;//CW;
-					case '8':
-						return 360 - 128;//CCW;
-					case '9':
-						return 210;//CW;
-					default:
-						goto case 'R';
-				}
-			}
+        public static float GetAngleFromFloorCharDirection(char direction) => 
+            GetAngleFromFloorCharDirectionWithCheck(direction, out var flag);
 
-			public char Angle2Direction(float direction)
-			{
-				switch (direction)
-				{
-					case 0:
-						return 'R';
-					case 45:
-						return 'E';
-					case 60:
-						return 'T';
-					case 90:
-						return 'U';
-					case 135:
-						return 'Q';
-					case 150:
-						return 'G';
-					case 180:
-						return 'L';
-					case 240:
-						return 'F';
-					case 270:
-						return 'D';
-					case 225:
-						return 'Z';
-					case 330:
-						return 'B';
-					case 315:
-						return 'C';
-					case 30:
-						return 'J';
-					case 120:
-						return 'H';
-					case 210:
-						return 'N';
-					case 300:
-						return 'M';
-					case 15:
-						return 'p';
-					case 75:
-						return 'o';
-					case 105:
-						return 'q';
-					case 165:
-						return 'W';
-					case 195:
-						return 'x';
-					case 255:
-						return 'V';
-					case 285:
-						return 'Y';
-					case 345:
-						return 'A';
-					case -1:
-						return '!';//midspin
-					case 108:
-						return '5';//CW;
-					case 360 - 108:
-						return '6';//CCW;
-					case 128:
-						return '7';//CW;
-					case 360 - 128:
-						return '8';//CCW;
-					case 210:
-						return '9';//CW;
-					default:
-						goto case 'R';
-				}
-			}
-		}
+        public static double IncrementAngle(double startangle, double increment)
+        {
+            return mod(startangle + increment, 6.2831854820251465);
+        }
 
-		//      public static double incrementAngle(double startangle, double increment)
-		//      {
-		//          return mod(startangle + increment, 6.2831854820251465);
-		//      }
+        //      public static double mod(double x, double m)
+        //      {
+        //          return (x % m + m) % m;
+        //      }
 
-		//      public static double mod(double x, double m)
-		//      {
-		//          return (x % m + m) % m;
-		//      }
+        //      public static Vector3 getVectorFromAngle(double angle, double radius)
+        //      {
+        //          return new Vector3((float)(Math.Sin(angle) * radius), (float)(Math.Cos(angle) * radius), 0f);
+        //      }
 
-		//      public static Vector3 getVectorFromAngle(double angle, double radius)
-		//      {
-		//          return new Vector3((float)(Math.Sin(angle) * radius), (float)(Math.Cos(angle) * radius), 0f);
-		//      }
+        //public List<Floor> MakeLevel()
+        //{
+        //	var listFloors = new List<Floor>();
+        //	string text = LevelReader.GetPathData(JObject);
+        //	Vector3 vector = Vector3.zero;
+        //	bool flag = true;
+        //	float num = 1f;
+        //	scrFloor component = UnityEngine.Object.Instantiate<GameObject>(this.floor, Vector3.zero, Quaternion.identity).GetComponent<scrFloor>();
+        //	listFloors.Add(component);
+        //	component.hasLit = true;
+        //	component.entryangle = 4.71238899230957;
+        //	component.name = "0/FloorR";
+        //	int num2 = 1;
+        //	for (int i = 0; i < text.Length; i++)
+        //	{
+        //		double radius = (double)scrController.instance.startRadius;
+        //		double num3 = 0.0;
+        //              bool isEditor = true;//Application.isEditor;
+        //		char c = text[i];
+        //		if (c <= 'q')
+        //		{
+        //			if (c != '!')
+        //			{
+        //				switch (c)
+        //				{
+        //					case '5':
+        //						num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, 1.8849555253982544);
+        //						break;
+        //					case '6':
+        //						num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, -1.8849555253982544);
+        //						break;
+        //					case '7':
+        //						num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, 2.243994951248169);
+        //						break;
+        //					case '8':
+        //						num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, -2.243994951248169);
+        //						break;
+        //					case '9':
+        //						num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, 3.665191411972046);
+        //						break;
+        //					case 'A':
+        //						num3 = 1.832595705986023;
+        //						break;
+        //					case 'B':
+        //						num3 = 2.6179938316345215;
+        //						break;
+        //					case 'C':
+        //						num3 = 2.356194496154785;
+        //						break;
+        //					case 'D':
+        //						num3 = 3.1415927410125732;
+        //						break;
+        //					case 'E':
+        //						num3 = 0.7853981852531433;
+        //						break;
+        //					case 'F':
+        //						num3 = 3.665191411972046;
+        //						break;
+        //					case 'G':
+        //						num3 = 5.759586334228516;
+        //						break;
+        //					case 'H':
+        //						num3 = 5.235987663269043;
+        //						break;
+        //					case 'J':
+        //						num3 = 1.0471975803375244;
+        //						break;
+        //					case 'L':
+        //						num3 = 4.71238899230957;
+        //						break;
+        //					case 'M':
+        //						num3 = 2.094395160675049;
+        //						break;
+        //					case 'N':
+        //						num3 = 4.188790321350098;
+        //						break;
+        //					case 'Q':
+        //						num3 = 5.4977874755859375;
+        //						break;
+        //					case 'R':
+        //						num3 = 1.5707963705062866;
+        //						break;
+        //					case 'T':
+        //						num3 = 0.5235987901687622;
+        //						break;
+        //					case 'U':
+        //						num3 = 0.0;
+        //						break;
+        //					case 'V':
+        //						num3 = 3.4033920764923096;
+        //						break;
+        //					case 'W':
+        //						num3 = 4.974188327789307;
+        //						break;
+        //					case 'Y':
+        //						num3 = 2.879793167114258;
+        //						break;
+        //					case 'Z':
+        //						num3 = 3.9269909858703613;
+        //						break;
+        //					case '[':
+        //						if (isEditor)
+        //						{
+        //							var flag2 = false;
+        //                                  var num4 = i + 1;
+        //                                  var flag3 = false;
+        //							if (i + 1 <= text.Length && text[i + 1] == '*')
+        //							{
+        //								flag3 = true;
+        //								num4++;
+        //							}
+        //							while (i + 1 <= text.Length && !flag2)
+        //							{
+        //								i++;
+        //								if (text[i] == ']')
+        //								{
+        //									flag2 = true;
+        //								}
+        //							}
+        //							string s = text.Substring(num4, i - num4).Replace(" ", "");
+        //							float num5 = 0f;
+        //							if (float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out num5))
+        //							{
+        //								float num6 = 0.017453292f * num5;
+        //								num3 = (flag3 ? incrementAngle(listFloors.Last<Floor>().EntryAngle, (double)num6) : ((double)num6));
+        //							}
+        //						}
+        //						break;
+        //					case 'h':
+        //						num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, 2.094395160675049);
+        //						break;
+        //					case 'j':
+        //						num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, -2.094395160675049);
+        //						break;
+        //					case 'o':
+        //						num3 = 0.2617993950843811;
+        //						break;
+        //					case 'p':
+        //						num3 = 1.3089969158172607;
+        //						break;
+        //					case 'q':
+        //						num3 = 6.021385669708252;
+        //						break;
+        //				}
+        //			}
+        //			else
+        //			{
+        //				num3 = listFloors.Last<Floor>().EntryAngle;
+        //			}
+        //		}
+        //		else if (c != 't')
+        //		{
+        //			if (c != 'x')
+        //			{
+        //				if (c == 'y')
+        //				{
+        //					num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, (double)(1.0471976f * (float)(flag ? -1 : 1)));
+        //				}
+        //			}
+        //			else
+        //			{
+        //				num3 = 4.450589656829834;
+        //			}
+        //		}
+        //		else
+        //		{
+        //			num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, (double)(1.0471976f * (float)(flag ? 1 : -1)));
+        //		}
+        //		Vector3 vectorFromAngle = getVectorFromAngle(num3, radius);
+        //		vector += vectorFromAngle;
+        //		if (listFloors.Count > 0)
+        //		{
+        //			listFloors[listFloors.Count - 1].ExitAngle = num3;
+        //		}
+        //		GameObject gameObject2 = UnityEngine.Object.Instantiate<GameObject>(this.floor, vector, default(Quaternion));
+        //		gameObject2.name = (i + 1).ToString() + "/Floor" + text[i].ToString();
+        //		scrFloor component2 = gameObject2.GetComponent<scrFloor>();
+        //		listFloors.Last<Floor>().nextfloor = component2;
+        //		listFloors.Add(component2);
+        //		component2.direction = text[i];
+        //		component2.seqID = num2;
+        //		component2.entryangle = (num3 + 3.1415927410125732) % 6.2831854820251465;
+        //		if (text[i] == '!')
+        //		{
+        //			listFloors[num2 - 1].IsMidSpin = true;
+        //		}
+        //		var flag4 = true;
 
-		//public List<Floor> MakeLevel()
-		//{
-		//	var listFloors = new List<Floor>();
-		//	string text = LevelReader.GetPathData(JObject);
-		//	Vector3 vector = Vector3.zero;
-		//	bool flag = true;
-		//	float num = 1f;
-		//	scrFloor component = UnityEngine.Object.Instantiate<GameObject>(this.floor, Vector3.zero, Quaternion.identity).GetComponent<scrFloor>();
-		//	listFloors.Add(component);
-		//	component.hasLit = true;
-		//	component.entryangle = 4.71238899230957;
-		//	component.name = "0/FloorR";
-		//	int num2 = 1;
-		//	for (int i = 0; i < text.Length; i++)
-		//	{
-		//		double radius = (double)scrController.instance.startRadius;
-		//		double num3 = 0.0;
-		//              bool isEditor = true;//Application.isEditor;
-		//		char c = text[i];
-		//		if (c <= 'q')
-		//		{
-		//			if (c != '!')
-		//			{
-		//				switch (c)
-		//				{
-		//					case '5':
-		//						num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, 1.8849555253982544);
-		//						break;
-		//					case '6':
-		//						num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, -1.8849555253982544);
-		//						break;
-		//					case '7':
-		//						num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, 2.243994951248169);
-		//						break;
-		//					case '8':
-		//						num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, -2.243994951248169);
-		//						break;
-		//					case '9':
-		//						num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, 3.665191411972046);
-		//						break;
-		//					case 'A':
-		//						num3 = 1.832595705986023;
-		//						break;
-		//					case 'B':
-		//						num3 = 2.6179938316345215;
-		//						break;
-		//					case 'C':
-		//						num3 = 2.356194496154785;
-		//						break;
-		//					case 'D':
-		//						num3 = 3.1415927410125732;
-		//						break;
-		//					case 'E':
-		//						num3 = 0.7853981852531433;
-		//						break;
-		//					case 'F':
-		//						num3 = 3.665191411972046;
-		//						break;
-		//					case 'G':
-		//						num3 = 5.759586334228516;
-		//						break;
-		//					case 'H':
-		//						num3 = 5.235987663269043;
-		//						break;
-		//					case 'J':
-		//						num3 = 1.0471975803375244;
-		//						break;
-		//					case 'L':
-		//						num3 = 4.71238899230957;
-		//						break;
-		//					case 'M':
-		//						num3 = 2.094395160675049;
-		//						break;
-		//					case 'N':
-		//						num3 = 4.188790321350098;
-		//						break;
-		//					case 'Q':
-		//						num3 = 5.4977874755859375;
-		//						break;
-		//					case 'R':
-		//						num3 = 1.5707963705062866;
-		//						break;
-		//					case 'T':
-		//						num3 = 0.5235987901687622;
-		//						break;
-		//					case 'U':
-		//						num3 = 0.0;
-		//						break;
-		//					case 'V':
-		//						num3 = 3.4033920764923096;
-		//						break;
-		//					case 'W':
-		//						num3 = 4.974188327789307;
-		//						break;
-		//					case 'Y':
-		//						num3 = 2.879793167114258;
-		//						break;
-		//					case 'Z':
-		//						num3 = 3.9269909858703613;
-		//						break;
-		//					case '[':
-		//						if (isEditor)
-		//						{
-		//							var flag2 = false;
-		//                                  var num4 = i + 1;
-		//                                  var flag3 = false;
-		//							if (i + 1 <= text.Length && text[i + 1] == '*')
-		//							{
-		//								flag3 = true;
-		//								num4++;
-		//							}
-		//							while (i + 1 <= text.Length && !flag2)
-		//							{
-		//								i++;
-		//								if (text[i] == ']')
-		//								{
-		//									flag2 = true;
-		//								}
-		//							}
-		//							string s = text.Substring(num4, i - num4).Replace(" ", "");
-		//							float num5 = 0f;
-		//							if (float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out num5))
-		//							{
-		//								float num6 = 0.017453292f * num5;
-		//								num3 = (flag3 ? incrementAngle(listFloors.Last<Floor>().EntryAngle, (double)num6) : ((double)num6));
-		//							}
-		//						}
-		//						break;
-		//					case 'h':
-		//						num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, 2.094395160675049);
-		//						break;
-		//					case 'j':
-		//						num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, -2.094395160675049);
-		//						break;
-		//					case 'o':
-		//						num3 = 0.2617993950843811;
-		//						break;
-		//					case 'p':
-		//						num3 = 1.3089969158172607;
-		//						break;
-		//					case 'q':
-		//						num3 = 6.021385669708252;
-		//						break;
-		//				}
-		//			}
-		//			else
-		//			{
-		//				num3 = listFloors.Last<Floor>().EntryAngle;
-		//			}
-		//		}
-		//		else if (c != 't')
-		//		{
-		//			if (c != 'x')
-		//			{
-		//				if (c == 'y')
-		//				{
-		//					num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, (double)(1.0471976f * (float)(flag ? -1 : 1)));
-		//				}
-		//			}
-		//			else
-		//			{
-		//				num3 = 4.450589656829834;
-		//			}
-		//		}
-		//		else
-		//		{
-		//			num3 = incrementAngle(listFloors.Last<Floor>().EntryAngle, (double)(1.0471976f * (float)(flag ? 1 : -1)));
-		//		}
-		//		Vector3 vectorFromAngle = getVectorFromAngle(num3, radius);
-		//		vector += vectorFromAngle;
-		//		if (listFloors.Count > 0)
-		//		{
-		//			listFloors[listFloors.Count - 1].ExitAngle = num3;
-		//		}
-		//		GameObject gameObject2 = UnityEngine.Object.Instantiate<GameObject>(this.floor, vector, default(Quaternion));
-		//		gameObject2.name = (i + 1).ToString() + "/Floor" + text[i].ToString();
-		//		scrFloor component2 = gameObject2.GetComponent<scrFloor>();
-		//		listFloors.Last<Floor>().nextfloor = component2;
-		//		listFloors.Add(component2);
-		//		component2.direction = text[i];
-		//		component2.seqID = num2;
-		//		component2.entryangle = (num3 + 3.1415927410125732) % 6.2831854820251465;
-		//		if (text[i] == '!')
-		//		{
-		//			listFloors[num2 - 1].IsMidSpin = true;
-		//		}
-		//		var flag4 = true;
-
-		//		component2.isCCW = !flag;
-		//		component2.speed = num;
-		//		num2++;
-		//	}
-		//}
-	}
+        //		component2.isCCW = !flag;
+        //		component2.speed = num;
+        //		num2++;
+        //	}
+        //}
+    }
 }
