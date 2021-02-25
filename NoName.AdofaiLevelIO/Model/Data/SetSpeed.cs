@@ -1,5 +1,6 @@
 ﻿using System;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using NoName.AdofaiLevelIO.Model.Actions;
 
 namespace NoName.AdofaiLevelIO.Model.Data
@@ -7,6 +8,7 @@ namespace NoName.AdofaiLevelIO.Model.Data
     public class SetSpeed : Action
     {
         [JsonProperty("speedType", Order = 2)]
+        [JsonConverter(typeof(StringEnumConverter))]
         public SpeedType SpeedType { get; }
 
         [JsonProperty("beatsPerMinute", Order = 3)]

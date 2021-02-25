@@ -6,5 +6,6 @@
         public double? EntryAngle { get; set; } = null;
         public double? ExitAngle { get; set; } = null;
         public float? Bpm { get; set; } = null;
+        public bool? IsClockWise { get; set; } = null;
     }
 }

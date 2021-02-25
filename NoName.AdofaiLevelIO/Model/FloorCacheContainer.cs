@@ -16,6 +16,8 @@ namespace NoName.AdofaiLevelIO.Model
                     floorCache.EntryAngle = value.EntryAngle;
                 if (value.ExitAngle != null)
                     floorCache.ExitAngle = value.ExitAngle;
+                if (value.IsClockWise != null)
+                    floorCache.IsClockWise = value.IsClockWise;
             }
             else
                 Add(key, value);
