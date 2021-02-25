@@ -15,7 +15,7 @@ namespace NoName.AdofaiLevelIO
 
         private readonly string _path;
 
-        public AdofaiLevel(string path) : base(JObject.Parse(File.ReadAllText(path)))
+        public AdofaiLevel(string path) : base(JObject.Parse(LevelFixer.Fix(File.ReadAllText(path))))
         {
             _path = path;
             Floors = new FloorContainer(RawData, this);
