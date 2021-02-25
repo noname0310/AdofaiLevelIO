@@ -72,7 +72,7 @@ namespace NoName.AdofaiLevelIO.Model
             var actions = LevelReader.GetActions(JObject);
             for (var i = 0; i < actions.Count; i++)
             {
-                if (actions[i]["floor"]?.ToObject<int>() == _floorIndex)
+                if (actions[i]["floor"]?.ToObject<int>() == _floorIndex && actions[i]["eventType"]?.ToString() == eventType.ToString())
                     LevelReader.RemoveAction(JObject, i);
             }
 

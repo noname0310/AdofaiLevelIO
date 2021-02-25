@@ -197,6 +197,11 @@ namespace NoName.AdofaiLevelIO.Model
 
                 if (!IsClockWise)
                     relativeAngle = Math.PI * 2.0 - relativeAngle;
+
+                var degree = relativeAngle * 360.0 / (Math.PI * 2.0);
+
+                if (-2.0 < degree && degree < 2.0)
+                    relativeAngle = Math.PI * 2.0;
                 return relativeAngle;
             }
         }

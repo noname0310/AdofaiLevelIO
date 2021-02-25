@@ -2,7 +2,7 @@
 using NoName.AdofaiLevelIO;
 using NoName.AdofaiLevelIO.Model.Actions;
 
-AdofaiLevel adofaiLevel = new("First Town Of This Journey (Easy).adofai");
+AdofaiLevel adofaiLevel = new("The Last Page.adofai");
 #pragma warning disable CA1416 // Validate platform compatibility
 Console.WindowWidth = 200;
 #pragma warning restore CA1416 // Validate platform compatibility
@@ -45,6 +45,17 @@ foreach (var item in adofaiLevel.Floors)
 Console.WriteLine("--------------Floors--------------");
 Console.WriteLine(adofaiLevel.RawData["pathData"]?.ToString());
 
-foreach (var floor in adofaiLevel.Floors)
-    floor.Bpm = (float)((floor.RelativeAngle * 360.0 / (Math.PI * 2.0)) / 180 * 300);
+var bpm = 1080f;
+var floorCount = adofaiLevel.Floors.Count;
+
+for (var i = 0; i < floorCount; i++)
+{
+    var floor = adofaiLevel.Floors[i];
+    
+    if (i % 4 == 1 || i % 4 == 2)
+        floor.Bpm = (float)(floor.RelativeAngle * 360.0 / (Math.PI * 2.0) / 180 * (bpm / 2));
+    else
+        floor.Bpm = (float)(floor.RelativeAngle * 360.0 / (Math.PI * 2.0) / 180 * bpm);
+}
+
 adofaiLevel.SaveLevel();
