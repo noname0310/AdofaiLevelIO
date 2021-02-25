@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="echo copy /Y $(TargetPath) $(SolutionDir)..\AdofaiLevelHelper\Assets\Plugins" />
+    <Exec Command="copy /Y $(TargetPath) $(SolutionDir)..\AdofaiBpmNormalizer\Assets\Plugins" />
   </Target>
 
 </Project>
