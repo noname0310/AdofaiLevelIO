@@ -3,7 +3,6 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 using NoName.AdofaiLevelIO.Model.Actions;
-using Action = NoName.AdofaiLevelIO.Model.Actions.Action;
 using EventType = NoName.AdofaiLevelIO.Model.Actions.EventType;
 
 namespace NoName.AdofaiLevelIO.Model
