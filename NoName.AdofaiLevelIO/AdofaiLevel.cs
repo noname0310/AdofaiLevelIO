@@ -40,7 +40,8 @@ namespace NoName.AdofaiLevelIO
                 {
                     var stringBuilder = new StringBuilder();
                     foreach (var item in fixedjson)
-                        stringBuilder.AppendLine(item);
+                        stringBuilder.AppendLine((1 <= item.Length && item[item.Length -1] == '\r') 
+                            ? item.Substring(0, item.Length - 1) : item);
                     jObject = JObject.Parse(stringBuilder.ToString());
                 }
                 else
@@ -53,7 +54,7 @@ namespace NoName.AdofaiLevelIO
                     fixedjson = json.Split('\n');
 
                 var str = fixedjson[e.LineNumber - 1];
-                fixedjson[e.LineNumber - 1] = str.Substring(0, e.LinePosition) + ',' + str.Substring(e.LinePosition);
+                fixedjson[e.LineNumber - 1] = $"{str.Substring(0, e.LinePosition - 1)},{str.Substring(e.LinePosition - 1)}";
                 goto parseStart;
             }
             return jObject;
