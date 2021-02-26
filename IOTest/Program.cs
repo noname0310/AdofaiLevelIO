@@ -2,7 +2,7 @@
 using NoName.AdofaiLevelIO;
 using NoName.AdofaiLevelIO.Model.Actions;
 
-AdofaiLevel adofaiLevel = new("The Last Page.adofai");
+AdofaiLevel adofaiLevel = new("level.adofai");
 #pragma warning disable CA1416 // Validate platform compatibility
 Console.WindowWidth = 200;
 #pragma warning restore CA1416 // Validate platform compatibility

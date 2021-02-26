@@ -14,6 +14,6 @@ namespace NoName.AdofaiLevelIO
             GetActions(jObject).Where(item => item["floor"].ToObject<int>() == floorIndex).ToList();
         internal static void AddAction(JObject jObject, JToken jToken) => (jObject["actions"] as JArray)?.Add(jToken);
         internal static void RemoveAction(JObject jObject, int index) => (jObject["actions"] as JArray)?.RemoveAt(index);
-        internal static void SortAction(JObject jObject) => jObject["actions"] = new JArray(GetActions(jObject).OrderBy(item => item["floor"].ToObject<int>()));
+        //internal static void SortAction(JObject jObject) => jObject["actions"] = new JArray(GetActions(jObject).OrderBy(item => item["floor"].ToObject<int>()));
     }
 }
