@@ -34,29 +34,31 @@ namespace NoName.AdofaiLevelIO
             string[] fixedjson = null;
 
             parseStart:
-            try 
+            try
             {
                 if (fixedjson != null)
                 {
                     var stringBuilder = new StringBuilder();
                     foreach (var item in fixedjson)
-                        stringBuilder.AppendLine((1 <= item.Length && item[item.Length -1] == '\r') 
-                            ? item.Substring(0, item.Length - 1) : item);
+                        stringBuilder.AppendLine((1 <= item.Length && item[item.Length - 1] == '\r')
+                            ? item.Substring(0, item.Length - 1)
+                            : item);
                     jObject = JObject.Parse(stringBuilder.ToString());
                 }
                 else
                     jObject = JObject.Parse(json);
             }
-            
             catch (JsonReaderException e)
             {
                 if (fixedjson == null)
                     fixedjson = json.Split('\n');
 
                 var str = fixedjson[e.LineNumber - 1];
-                fixedjson[e.LineNumber - 1] = $"{str.Substring(0, e.LinePosition - 1)},{str.Substring(e.LinePosition - 1)}";
+                fixedjson[e.LineNumber - 1] =
+                    $"{str.Substring(0, e.LinePosition - 1)},{str.Substring(e.LinePosition - 1)}";
                 goto parseStart;
             }
+
             return jObject;
         }
     }
