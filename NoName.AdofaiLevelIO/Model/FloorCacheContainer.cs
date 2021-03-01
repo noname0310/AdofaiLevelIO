@@ -1,13 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace NoName.AdofaiLevelIO.Model
 {
-    public class FloorCacheContainer : Dictionary<int, FloorCache>
+    internal class FloorCacheContainer : List<FloorCache>
     {
-        public void Caching(int key, FloorCache value)
+        public void Caching(int index, FloorCache value)
         {
-            if (TryGetValue(key, out var floorCache))
+            if (index < Count)
             {
+                var floorCache = this[index];
+
                 if (value.Direction != null)
                     floorCache.Direction = value.Direction;
                 if (value.Bpm != null)
@@ -19,8 +22,60 @@ namespace NoName.AdofaiLevelIO.Model
                 if (value.IsClockWise != null)
                     floorCache.IsClockWise = value.IsClockWise;
             }
+            else if (Count == index) 
+                Add(value);
             else
-                Add(key, value);
+            {
+                for (var i = Count; i < index; i++)
+                    Add(new FloorCache());
+                Add(value);
+            }
+        }
+
+        public bool TryGetValue(int index, out FloorCache floorCache)
+        {
+            if (index < Count)
+            {
+                floorCache = this[index];
+                return true;
+            }
+
+            floorCache = null;
+            return false;
+        }
+
+        public void AddListener(Floor floor) => floor.OnFloorChanged += Floor_OnFloorChanged;
+
+        public void RemoveListener(Floor floor) => floor.OnFloorChanged -= Floor_OnFloorChanged;
+
+        private void Floor_OnFloorChanged(int floorIndex, CacheValue cacheValue)
+        {
+            var count = Count;
+            switch (cacheValue)
+            {
+                case CacheValue.Direction:
+                    for (var i = floorIndex; i < count; i++)
+                        this[i].Direction = null;
+                    break;
+                case CacheValue.EntryAngle:
+                    for (var i = floorIndex; i < count; i++)
+                        this[i].EntryAngle = null;
+                    break;
+                case CacheValue.ExitAngle:
+                    for (var i = floorIndex; i < count; i++)
+                        this[i].ExitAngle = null;
+                    break;
+                case CacheValue.Bpm:
+                    for (var i = floorIndex; i < count; i++)
+                        this[i].Bpm = null;
+                    break;
+                case CacheValue.IsClockWise:
+                    for (var i = floorIndex; i < count; i++)
+                        this[i].IsClockWise = null;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(cacheValue), cacheValue, null);
+            }
         }
     }
 }

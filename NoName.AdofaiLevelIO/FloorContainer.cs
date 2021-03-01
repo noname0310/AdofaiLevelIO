@@ -1,42 +1,82 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using Newtonsoft.Json.Linq;
 using NoName.AdofaiLevelIO.Model;
 
 namespace NoName.AdofaiLevelIO
 {
-    public class FloorContainer : JObjectMaterializer, IEnumerable<Floor>
+    public class FloorContainer : IEnumerable<Floor>
     {
-        public int Count => LevelReader.GetPathData(JObject).Length;
-
-        public Floor this[int index]
+        public int Count => _floorList.Count;
+        public string PathData
         {
             get
             {
-                if (Count <= index)
+                var stringBuilder = new StringBuilder(_floorList.Count);
+                foreach (var item in _floorList)
+                    stringBuilder.Append(item.Direction);
+                return stringBuilder.ToString();
+            }
+        }
+        public LinkedListNode<Floor> this[int index]
+        {
+            get
+            {
+                if (_floorList.Count <= index)
                     throw new IndexOutOfRangeException();
-                return new Floor(JObject, index, _adofaiLevel, _floorCache);
+
+                if (index < _cachedfloorList.Count)
+                    return _cachedfloorList[index];
+
+                if (_cachedfloorList.Count == 0)
+                    _cachedfloorList.Add(_floorList.First);
+
+                var currentNode = _cachedfloorList[_cachedfloorList.Count - 1];
+
+                for (var i = _cachedfloorList.Count - 1; i < index; i++)
+                {
+                    if (currentNode.Next == null)
+                        break;
+                    currentNode = currentNode.Next;
+                    _cachedfloorList.Add(currentNode);
+                }
+                return currentNode;
+            }
+        }
+        
+        private readonly FloorCacheContainer _floorCache;
+        private readonly LinkedList<Floor> _floorList;
+        private readonly List<LinkedListNode<Floor>> _cachedfloorList;
+
+        internal FloorContainer(string pathData, AdofaiLevel adofaiLevel)
+        {
+            _floorCache = new FloorCacheContainer();
+            _floorList = new LinkedList<Floor>();
+            _cachedfloorList = new List<LinkedListNode<Floor>>();
+
+            var actions = new List<JToken>[pathData.Length];
+            for (var i = 0; i < pathData.Length; i++)
+                actions[i] = new List<JToken>();
+            foreach (var action in LevelReader.GetActions(adofaiLevel.RawData))
+                actions[action["floor"]?.ToObject<int>() ?? throw new Exception("json parse error : floor is not int")].Add(action);
+
+            for (var i = 0; i < pathData.Length; i++)
+            {
+                var item = new Floor(i, pathData[i], actions[i], adofaiLevel, _floorCache);
+                _floorList.AddLast(item);
+                item.SelfPosition = _floorList.Last;
             }
         }
 
-        private readonly AdofaiLevel _adofaiLevel;
-        private readonly FloorCacheContainer _floorCache;
-
-        internal FloorContainer(JObject jObject, AdofaiLevel adofaiLevel) : base(jObject)
+        public void ResetCache()
         {
-            _adofaiLevel = adofaiLevel;
-            _floorCache = new FloorCacheContainer();
+            _floorCache.Clear();
+            _cachedfloorList.Clear();
         }
 
-        public void ResetCache() => _floorCache.Clear();
-
-        public IEnumerator<Floor> GetEnumerator()
-        {
-            var count = Count;
-            for (var i = 0; i < count; i++)
-                yield return this[i];
-        }
+        public IEnumerator<Floor> GetEnumerator() => _floorList.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }

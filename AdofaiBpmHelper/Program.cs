@@ -19,7 +19,7 @@ var bpm = (float)int.Parse(Console.ReadLine() ?? string.Empty);
 
 for (var i = startindex; i < endindex; i++)
 {
-    var floor = adofaiLevel.Floors[i];
+    var floor = adofaiLevel.Floors[i].Value;
 
     if (i % 4 == 1 || i % 4 == 2)
         floor.Bpm = (float)(floor.RelativeAngle * 360.0 / (Math.PI * 2.0) / 180 * (bpm / 2));

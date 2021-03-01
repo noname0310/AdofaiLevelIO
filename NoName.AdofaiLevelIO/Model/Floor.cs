@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
@@ -7,33 +8,20 @@ using EventType = NoName.AdofaiLevelIO.Model.Actions.EventType;
 
 namespace NoName.AdofaiLevelIO.Model
 {
-    public class Floor : JObjectMaterializer
+    public class Floor
     {
-        public int Index { get; }
+        internal delegate void FloorChanged(int floorIndex, CacheValue cacheValue);
+        internal event FloorChanged OnFloorChanged;
+
+        internal LinkedListNode<Floor> SelfPosition { get; set; }
+        public int Index { get; internal set; }
         public char Direction
         {
-            get
-            {
-                if (_floorCacheContainer.TryGetValue(Index, out var floorCache) && floorCache.Direction != null)
-                    return floorCache.Direction.Value;
-                var direction = LevelReader.GetPathData(JObject)[Index];
-				_floorCacheContainer.Caching(Index, new FloorCache() { Direction = direction });
-				return direction;
-            }
+            get => _direction;
             set
             {
-                if (Index == 0)
-                    throw new IndexOutOfRangeException("StartFloor cannot be modified");
-
-                var data = LevelReader.GetPathData(JObject).ToCharArray();
-                data[Index] = value;
-				LevelReader.SetPathData(JObject, new string(data));
-                _floorCacheContainer.Caching(Index, new FloorCache() { Direction = value });
-                foreach (var item in _floorCacheContainer)
-                {
-                    item.Value.EntryAngle = null;
-                    item.Value.ExitAngle = null;
-                }
+                _direction = value;
+                OnFloorChanged?.Invoke(Index, CacheValue.Direction);
             }
         }
 
@@ -46,8 +34,11 @@ namespace NoName.AdofaiLevelIO.Model
 
 				if (_floorCacheContainer.TryGetValue(Index, out var floorCache) && floorCache.EntryAngle != null)
                     return floorCache.EntryAngle.Value;
-                
-                var result = _adofaiLevel.Floors[Index - 1].ExitAngle;
+
+                if (SelfPosition.Previous == null)
+                    throw new Exception("it can't be logically");
+
+                var result = SelfPosition.Previous.Value.ExitAngle;
                 result = (result + 3.1415927410125732) % 6.2831854820251465;
 
                 _floorCacheContainer.Caching(Index, new FloorCache() { EntryAngle = result });
@@ -222,7 +213,7 @@ namespace NoName.AdofaiLevelIO.Model
 
                     var setSpeedAction = (
                         from action 
-                        in _adofaiLevel.Floors[i].Actions 
+                        in Actions 
                         where action.EventType == EventType.SetSpeed 
                         select action as SetSpeed
                         ).FirstOrDefault();
@@ -259,7 +250,10 @@ namespace NoName.AdofaiLevelIO.Model
 					return;
                 }
 
-                if (Mathf.Approximately(_adofaiLevel.Floors[Index - 1].Bpm, value))
+                if (SelfPosition.Previous == null)
+                    throw new Exception("it can't be logically");
+
+                if (Mathf.Approximately(SelfPosition.Previous.Value.Bpm, value))
                 {
 					Actions.Remove(EventType.SetSpeed);
                     return;
@@ -267,7 +261,7 @@ namespace NoName.AdofaiLevelIO.Model
 
                 Actions.Add(new Data.SetSpeed(SpeedType.Bpm, value));
 				_floorCacheContainer.Caching(Index, new FloorCache() { Bpm = value });
-			}
+            }
         }
 
         public bool IsMidSpin => Direction == '!';
@@ -291,7 +285,7 @@ namespace NoName.AdofaiLevelIO.Model
                         return result;
                     }
 
-                    if (_adofaiLevel.Floors[i].Actions.Any(action => action.EventType == EventType.Twirl))
+                    if (Actions.Any(action => action.EventType == EventType.Twirl))
                         twirlCount += 1;
                 }
                 
@@ -303,16 +297,28 @@ namespace NoName.AdofaiLevelIO.Model
 
         public ActionContainer Actions { get; }
 
+        private char _direction;
         private readonly AdofaiLevel _adofaiLevel;
         private readonly FloorCacheContainer _floorCacheContainer;
 
-		internal Floor(JObject jObject, int floorIndex, AdofaiLevel adofaiLevel, FloorCacheContainer floorCacheContainer) : base(jObject)
+		internal Floor(int index, char direction, IEnumerable<JToken> actionsJToken, AdofaiLevel adofaiLevel, FloorCacheContainer floorCacheContainer)
         {
-            Actions = new ActionContainer(jObject, floorIndex, floorCacheContainer);
-            Index = floorIndex;
+            Actions = new ActionContainer(actionsJToken);
+            Actions.OnActionChanged += Actions_OnActionChanged;
+            Index = index;
+            _direction = direction;
             _adofaiLevel = adofaiLevel;
             _floorCacheContainer = floorCacheContainer;
+            floorCacheContainer.AddListener(this);
         }
+
+        ~Floor()
+        {
+            Actions.OnActionChanged -= Actions_OnActionChanged;
+            _floorCacheContainer.RemoveListener(this);
+        }
+
+        private void Actions_OnActionChanged(CacheValue cacheValue) => OnFloorChanged?.Invoke(Index, cacheValue);
 
         public static float GetAngleFromFloorCharDirectionWithCheck(char direction, out bool exists)
         {
@@ -390,8 +396,8 @@ namespace NoName.AdofaiLevelIO.Model
         public static float GetAngleFromFloorCharDirection(char direction) => 
             GetAngleFromFloorCharDirectionWithCheck(direction, out _);
 
-        public static double IncrementAngle(double startangle, double increment) => Mod(startangle + increment, 6.2831854820251465);
+        private static double IncrementAngle(double startangle, double increment) => Mod(startangle + increment, 6.2831854820251465);
 
-        public static double Mod(double x, double m) => (x % m + m) % m;
+        private static double Mod(double x, double m) => (x % m + m) % m;
     }
 }

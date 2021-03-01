@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
@@ -7,50 +8,55 @@ using Action = NoName.AdofaiLevelIO.Model.Actions.Action;
 
 namespace NoName.AdofaiLevelIO.Model
 {
-    public class ActionContainer : JObjectMaterializer, IEnumerable<Action>
+    public class ActionContainer : IEnumerable<Action>
     {
-        public int Count => LevelReader.GetFloorActions(JObject, _floorIndex).Count;
-        public Action this[int index] 
+        internal delegate void ActionChanged(CacheValue cacheValue);
+        internal event ActionChanged OnActionChanged;
+
+        public int Count => _actions.Count;
+        public Action this[int index] => _actions[index];
+
+        private readonly List<Action> _actions;
+
+        internal ActionContainer(IEnumerable<JToken> actions)
         {
-            get
+            _actions = actions.Select(actionJToken =>
             {
-                switch (Action.ParseEventType(LevelReader.GetFloorActions(JObject, _floorIndex)[index]["eventType"]?.ToString()))
+                Action action;
+                switch (Action.ParseEventType(actionJToken["eventType"]?.ToString()))
                 {
                     case EventType.Twirl:
-                        return new Twirl(JObject, _floorIndex, index, _floorCacheContainer);
+                        action = new Twirl(actionJToken);
+                        break;
                     case EventType.SetSpeed:
-                        return new SetSpeed(JObject, _floorIndex, index, _floorCacheContainer);
+                        action = new SetSpeed(actionJToken);
+                        break;
                     case EventType.NotAvailable:
                         goto default;
                     default:
-                        return new Action(JObject, _floorIndex, index, _floorCacheContainer);
+                        action = new Action(actionJToken);
+                        break;
                 }
-            }
+                action.ActionChanged += Action_OnActionChanged;
+                return action;
+            }).ToList();
         }
 
-        private readonly int _floorIndex;
-        private readonly FloorCacheContainer _floorCacheContainer;
-
-        internal ActionContainer(JObject jObject, int floorIndex, FloorCacheContainer floorCacheContainer) : base(jObject)
-        {
-            _floorIndex = floorIndex;
-            _floorCacheContainer = floorCacheContainer;
-        }
+        private void Action_OnActionChanged(CacheValue cacheValue) => OnActionChanged?.Invoke(cacheValue);
 
         public void Add(Data.Action action)
         {
-            action.Floor = _floorIndex;
+            Action instance = null;
 
             switch (action.EventType)
             {
                 case EventType.Twirl:
                     if (Find(EventType.Twirl) != null)
                         break;
-                    LevelReader.AddAction(JObject, JToken.FromObject(action));
+                    instance = new Twirl(JToken.FromObject(action));
+                    OnActionChanged?.Invoke(CacheValue.IsClockWise);
                     break;
                 case EventType.SetSpeed:
-                    foreach (var item in _floorCacheContainer)
-                        item.Value.Bpm = null;
                     var setSpeedData = (Data.SetSpeed)action;
                     if (Find(EventType.SetSpeed) is SetSpeed setSpeed)
                         setSpeed.SetValue(setSpeedData.SpeedType,
@@ -58,27 +64,43 @@ namespace NoName.AdofaiLevelIO.Model
                                 ? setSpeedData.BeatsPerMinute
                                 : setSpeedData.BpmMultiplier);
                     else
-                        LevelReader.AddAction(JObject, JToken.FromObject(setSpeedData));
+                        instance = new SetSpeed(JToken.FromObject(setSpeedData));
+                    OnActionChanged?.Invoke(CacheValue.Bpm);
                     break;
                 case EventType.NotAvailable:
                     goto default;
                 default:
                     break;
             }
+
+            if (instance == null) return;
+            instance.ActionChanged += Action_OnActionChanged;
+            _actions.Add(instance);
         }
 
         public void Remove(EventType eventType)
         {
-            var actions = LevelReader.GetActions(JObject);
-            for (var i = 0; i < actions.Count; i++)
+            for (var i = 0; i < _actions.Count; i++)
             {
-                if (actions[i]["floor"]?.ToObject<int>() == _floorIndex && actions[i]["eventType"]?.ToString() == eventType.ToString())
-                    LevelReader.RemoveAction(JObject, i);
+                if (_actions[i].EventType != eventType) continue;
+                _actions.RemoveAt(i);
+                switch (eventType)
+                {
+                    case EventType.SetSpeed:
+                        OnActionChanged?.Invoke(CacheValue.Bpm);
+                        break;
+                    case EventType.Twirl:
+                        OnActionChanged?.Invoke(CacheValue.IsClockWise);
+                        break;
+                    case EventType.NotAvailable:
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(eventType), eventType, null);
+                }
+                break;
             }
 
-            if (eventType != EventType.SetSpeed) return;
-            foreach (var item in _floorCacheContainer)
-                item.Value.Bpm = null;
+            
         }
 
         public Action Find(EventType eventType) => this.FirstOrDefault(action => action.EventType == eventType);

@@ -21,6 +21,7 @@ foreach (var item in adofaiLevel.Floors)
     Console.Write($" ExitAngle: {item.ExitAngle * 360.0 / (Math.PI * 2.0):000.0}");
     Console.Write($" RelativeAngle: {item.RelativeAngle * 360.0 / (Math.PI * 2.0):000.0}");
     Console.Write($" BPM: {item.Bpm:0000}");
+    Console.Write($" RealBPM: {item.Bpm / item.RelativeAngle * 360.0 / (Math.PI * 2.0) / 180:0000}");
     Console.Write($" IsClockWise: {item.IsClockWise}");
     Console.Write($" Actions:{item.Actions.Count:D3}");
     Console.Write(" { ");
@@ -45,17 +46,22 @@ foreach (var item in adofaiLevel.Floors)
 Console.WriteLine("--------------Floors--------------");
 Console.WriteLine(adofaiLevel.RawData["pathData"]?.ToString());
 
-var bpm = 1080f;
-var floorCount = adofaiLevel.Floors.Count;
-
-for (var i = 0; i < floorCount; i++)
+for (var j = adofaiLevel.Floors.Count - 1; j >= 0 ; j--)
 {
-    var floor = adofaiLevel.Floors[i];
-    
+    Console.WriteLine(adofaiLevel.Floors[j].Value.Index);
+}
+
+const float bpm = 400f;
+var i = 0;
+foreach (var floor in adofaiLevel.Floors)
+{
+    if (floor.IsMidSpin)
+        i -= 1;
     if (i % 4 == 1 || i % 4 == 2)
         floor.Bpm = (float)(floor.RelativeAngle * 360.0 / (Math.PI * 2.0) / 180 * (bpm / 2));
     else
         floor.Bpm = (float)(floor.RelativeAngle * 360.0 / (Math.PI * 2.0) / 180 * bpm);
+    i += 1;
 }
 
 adofaiLevel.SaveLevel();

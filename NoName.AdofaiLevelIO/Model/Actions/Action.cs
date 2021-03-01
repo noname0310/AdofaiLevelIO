@@ -1,24 +1,21 @@
-﻿using System;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 
 namespace NoName.AdofaiLevelIO.Model.Actions
 {
-    public class Action : JObjectMaterializer
+    public class Action
     {
-        public EventType EventType => ParseEventType(LevelReader.GetFloorActions(JObject, FloorIndex)[ActionIndex]["eventType"]?.ToString());
+        internal event ActionContainer.ActionChanged ActionChanged;
 
-        protected readonly int FloorIndex;
-        protected readonly int ActionIndex;
-        protected readonly FloorCacheContainer FloorCacheContainer;
+        public EventType EventType => ParseEventType(ActionJToken["eventType"]?.ToString());
+        
+        internal JToken ActionJToken { get; }
 
-        internal Action(JObject jObject, int floorIndex, int actionIndex, FloorCacheContainer floorCacheContainer) : base(jObject)
+        internal Action(JToken actionJToken)
         {
-            if (LevelReader.GetFloorActions(jObject, floorIndex).Count <= actionIndex)
-                throw new IndexOutOfRangeException();
-            FloorIndex = floorIndex;
-            ActionIndex = actionIndex;
-            FloorCacheContainer = floorCacheContainer;
+            ActionJToken = actionJToken;
         }
+
+        protected internal void OnActionChanged(CacheValue cacheValue) => ActionChanged?.Invoke(cacheValue);
 
         internal static EventType ParseEventType(string eventType)
         {

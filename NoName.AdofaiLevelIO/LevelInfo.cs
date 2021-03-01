@@ -3,30 +3,32 @@ using Newtonsoft.Json.Linq;
 
 namespace NoName.AdofaiLevelIO
 {
-    public class LevelInfo : JObjectMaterializer
+    public class LevelInfo
     {
         public string Artist
         {
-            get => LevelReader.GetSettings(JObject)["artist"]?.ToString();
-            set => LevelReader.GetSettings(JObject)["artist"] = value;
+            get => _settingsJToken["artist"]?.ToString();
+            set => _settingsJToken["artist"] = value;
         }
         public string Song
         {
-            get => LevelReader.GetSettings(JObject)["song"]?.ToString();
-            set => LevelReader.GetSettings(JObject)["song"] = value;
+            get => _settingsJToken["song"]?.ToString();
+            set => _settingsJToken["song"] = value;
         }
         public string Author
         {
-            get => LevelReader.GetSettings(JObject)["author"]?.ToString();
-            set => LevelReader.GetSettings(JObject)["author"] = value;
+            get => _settingsJToken["author"]?.ToString();
+            set => _settingsJToken["author"] = value;
         }
         public float Bpm
         {
-            get => LevelReader.GetSettings(JObject)["bpm"]?.ToObject<float>() ?? 
+            get => _settingsJToken["bpm"]?.ToObject<float>() ?? 
                    throw new Exception("bpm is not 32bit floating point");
-            set => LevelReader.GetSettings(JObject)["bpm"] = value;
+            set => _settingsJToken["bpm"] = value;
         }
 
-        internal LevelInfo(JObject jObject) : base(jObject) { }
+        private readonly JToken _settingsJToken;
+
+        internal LevelInfo(JToken settingsJToken) => _settingsJToken = settingsJToken;
     }
 }

@@ -7,8 +7,8 @@ namespace NoName.AdofaiLevelIO.Model.Actions
     {
         public SpeedType SpeedType
         {
-            get => ParseSpeedType(LevelReader.GetFloorActions(JObject, FloorIndex)[ActionIndex]["speedType"]?.ToString());
-            private set => LevelReader.GetFloorActions(JObject, FloorIndex)[ActionIndex]["speedType"] = SpeedType2String(value);
+            get => ParseSpeedType(ActionJToken["speedType"]?.ToString());
+            private set => ActionJToken["speedType"] = SpeedType2String(value);
         }
 
         public float Value
@@ -18,10 +18,10 @@ namespace NoName.AdofaiLevelIO.Model.Actions
                 switch (SpeedType)
                 {
                     case SpeedType.Bpm:
-                        return LevelReader.GetFloorActions(JObject, FloorIndex)[ActionIndex]["beatsPerMinute"]?
+                        return ActionJToken["beatsPerMinute"]?
                             .ToObject<float>() ?? throw new Exception("Value not exist");
                     case SpeedType.Multiplier:
-                        return LevelReader.GetFloorActions(JObject, FloorIndex)[ActionIndex]["bpmMultiplier"]?
+                        return ActionJToken["bpmMultiplier"]?
                             .ToObject<float>() ?? throw new Exception("Value not exist");
                     case SpeedType.NotAvailable:
                         goto case default;
@@ -34,10 +34,10 @@ namespace NoName.AdofaiLevelIO.Model.Actions
                 switch (SpeedType)
                 {
                     case SpeedType.Bpm:
-                        LevelReader.GetFloorActions(JObject, FloorIndex)[ActionIndex]["beatsPerMinute"] = value;
+                        ActionJToken["beatsPerMinute"] = value;
                         break;
                     case SpeedType.Multiplier:
-                        LevelReader.GetFloorActions(JObject, FloorIndex)[ActionIndex]["bpmMultiplier"] = value;
+                        ActionJToken["bpmMultiplier"] = value;
                         break;
                     case SpeedType.NotAvailable:
                         goto case default;
@@ -47,15 +47,13 @@ namespace NoName.AdofaiLevelIO.Model.Actions
             }
         }
 
-        internal SetSpeed(JObject jObject, int floorIndex, int actionIndex, FloorCacheContainer floorCacheContainer) 
-            : base(jObject, floorIndex, actionIndex, floorCacheContainer) { }
+        internal SetSpeed(JToken actionJToken) : base(actionJToken) { }
 
         public void SetValue(SpeedType speedType, float value)
         {
-            foreach (var item in FloorCacheContainer)
-                item.Value.Bpm = null;
             SpeedType = speedType;
             Value = value;
+            OnActionChanged(CacheValue.Bpm);
         }
 
         internal static SpeedType ParseSpeedType(string speedType)
